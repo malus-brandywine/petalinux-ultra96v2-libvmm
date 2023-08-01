@@ -1,0 +1,240 @@
+diff -ruN -p2 petalinux/scripts/avnet-image-minimal.inc.patch petalinux/scripts.96/avnet-image-minimal.inc.patch
+--- petalinux/scripts/avnet-image-minimal.inc.patch	1969-12-31 19:00:00.000000000 -0500
++++ petalinux/scripts.96/avnet-image-minimal.inc.patch	2023-06-12 16:36:34.050969000 -0400
+@@ -0,0 +1,59 @@
++1c1,2
++< require recipes-core/images/petalinux-image-common.inc
++---
++> inherit core-image
++> #require recipes-core/images/petalinux-image-common.inc
++11d11
++<         bonnie++ \
++13,16d12
++<         e2fsprogs \
++<         e2fsprogs-resize2fs \
++<         e2fsprogs-e2fsck \
++<         e2fsprogs-mke2fs \
++18,19d13
++<         fpga-manager-script \
++<         haveged \
++21,24d14
++<         hellopm \
++<         i2c-tools \
++<         i2c-tools-misc \
++<         iperf3 \
++26d15
++<         mtd-utils \
++28,30d16
++<         packagegroup-core-boot \
++<         packagegroup-core-ssh-dropbear \
++<         packagegroup-petalinux-lmsensors \
++32d17
++<         pmic-prog \
++34d18
++<         tcf-agent \
++36d19
++<         usbutils \
++42,44d24
++<         bluez5 \
++<         git \
++<         iw \
++46,62d25
++<         openamp-fw-echo-testd \
++<         openamp-fw-mat-muld \
++<         openamp-fw-rpc-demo \
++<         packagegroup-base-extended \
++<         packagegroup-petalinux \
++<         packagegroup-petalinux-96boards-sensors \
++<         packagegroup-petalinux-benchmarks \
++<         packagegroup-petalinux-openamp \
++<         packagegroup-petalinux-ultra96-webapp \
++<         packagegroup-petalinux-utils \
++<         ultra96-ap-setup \
++<         ultra96-misc \
++<         ultra96-radio-leds \
++<         ultra96-wpa \
++<         usb-gadget-ethernet \
++<         wilc3000-fw \
++<         wilc \
++125,126d87
++<         debug-tweaks \
++<         hwcodecs \
++128d88
++<         ssh-server-dropbear \
+diff -ruN -p2 petalinux/scripts/common.sh petalinux/scripts.96/common.sh
+--- petalinux/scripts/common.sh	2023-07-31 16:32:41.914105326 -0400
++++ petalinux/scripts.96/common.sh	2023-07-31 12:42:48.360517000 -0400
+@@ -354,4 +354,16 @@ configure_petalinux_project()
+   fi
+ 
++  # Reduce rootfs avnet minimal image
++  patch project-spec/meta-avnet/recipes-core/images/avnet-image-minimal.inc \
++        ../../scripts/avnet-image-minimal.inc.patch
++
++  # Allow U-Boot to chose which EL to switch to for applications running through "Go" command;
++  # Also enable USB-Ethernet adapter (TP-Link UE300) to load seL4 Core Platform system image
++  patch project-spec/meta-user/recipes-bsp/u-boot/u-boot-xlnx_%.bbappend \
++        ../../scripts/u-boot-xlnx_%.bbappend.patch
++  cp -v ../../scripts/u-boot-xlnx-Choose-EL.patch project-spec/meta-user/recipes-bsp/u-boot/files
++  cp -v ../../scripts/u-boot-xlnx-Enable-Usb-Eth-Dongle.patch project-spec/meta-user/recipes-bsp/u-boot/files
++
++
+   petalinux-config --silentconfig
+ }
+diff -ruN -p2 petalinux/scripts/make_ultra96v2.vmm.sh petalinux/scripts.96/make_ultra96v2.vmm.sh
+--- petalinux/scripts/make_ultra96v2.vmm.sh	1969-12-31 19:00:00.000000000 -0500
++++ petalinux/scripts.96/make_ultra96v2.vmm.sh	2023-07-28 13:58:18.974176000 -0400
+@@ -0,0 +1,101 @@
++# ----------------------------------------------------------------------------
++#
++#        ** **        **          **  ****      **  **********  ********** ®
++#       **   **        **        **   ** **     **  **              **
++#      **     **        **      **    **  **    **  **              **
++#     **       **        **    **     **   **   **  *********       **
++#    **         **        **  **      **    **  **  **              **
++#   **           **        ****       **     ** **  **              **
++#  **  .........  **        **        **      ****  **********      **
++#     ...........
++#                                     Reach Further™
++#
++# ----------------------------------------------------------------------------
++#
++#  This design is the property of Avnet.  Publication of this
++#  design is not authorized without written consent from Avnet.
++#
++#  Please direct any questions to the UltraZed community support forum:
++#     http://www.ultrazed.org/forum
++#
++#  Product information is available at:
++#     http://www.ultrazed.org/product/ultra96
++#
++#  Disclaimer:
++#     Avnet, Inc. makes no warranty for the use of this code or design.
++#     This code is provided  "As Is". Avnet, Inc assumes no responsibility for
++#     any errors, which may appear in this code, nor does it make a commitment
++#     to update the information contained herein. Avnet, Inc specifically
++#     disclaims any implied warranties of fitness for a particular purpose.
++#                      Copyright(c) 2017 Avnet, Inc.
++#                              All rights reserved.
++#
++# ----------------------------------------------------------------------------
++#
++#  Create Date:         August 03, 2020
++#  Design Name:         Avnet Ultra96v2 PetaLinux BSP Generator
++#  Module Name:         make_ultra96v2.sh
++#  Project Name:        Avnet Ultra96v2 PetaLinux BSP Generator
++#  Target Devices:      Xilinx Zynq Ultrascale MPSoC
++#  Hardware Boards:     Ultra96v2 Eval Board
++#
++#  Tool versions:       Xilinx Vivado 2020.1
++#
++#  Description:         Build Script for Ultra96v2 PetaLinux BSP HW Platform
++#
++#  Dependencies:        Common Script 'common.sh'
++#
++#  Revision:            Aug 03, 2020: 1.00 Initial version
++#
++# ----------------------------------------------------------------------------
++
++#!/bin/bash
++
++# Stop the script whenever we had an error (non-zero returning function)
++set -e
++
++# MAIN_SCRIPT_FOLDER is the folder where this current script is
++MAIN_SCRIPT_FOLDER=$(realpath $0 | xargs dirname)
++
++FSBL_PROJECT_NAME=zynqmp_fsbl
++
++HDL_HARDWARE_NAME=ultra96v2_oob_hw
++HDL_PROJECT_NAME=ultra96v2_oob
++HDL_BOARD_NAME=ULTRA96V2
++
++ARCH="aarch64"
++SOC="zynqMP"
++
++PETALINUX_BOARD_NAME=ultra96v2
++PETALINUX_PROJECT_BASE_NAME=${PETALINUX_BOARD_NAME}_oob
++#PETALINUX_BUILD_IMAGE=avnet-image-full
++PETALINUX_BUILD_IMAGE=avnet-image-minimal
++
++KEEP_CACHE="true"
++KEEP_WORK="true"
++DEBUG="no"
++
++#NO_BIT_OPTION can be set to 'yes' to generate a BOOT.BIN without bitstream
++NO_BIT_OPTION='yes'
++
++source ${MAIN_SCRIPT_FOLDER}/common.sh
++
++verify_repositories
++verify_environment
++check_git_tag
++
++build_hw_platform
++create_petalinux_project
++configure_petalinux_project
++
++#BOOT_METHOD='EXT4'
++#configure_boot_method
++#build_bsp
++
++BOOT_METHOD='INITRD'
++BOOT_SUFFIX='_MINIMAL'
++INITRAMFS_IMAGE="avnet-image-minimal"
++configure_boot_method
++build_bsp
++
++package_bsp
+diff -ruN -p2 petalinux/scripts/u-boot-xlnx_%.bbappend.patch petalinux/scripts.96/u-boot-xlnx_%.bbappend.patch
+--- petalinux/scripts/u-boot-xlnx_%.bbappend.patch	1969-12-31 19:00:00.000000000 -0500
++++ petalinux/scripts.96/u-boot-xlnx_%.bbappend.patch	2023-07-31 11:51:37.925611000 -0400
+@@ -0,0 +1,11 @@
++3c3,7
++< SRC_URI += "file://platform-top.h"
++---
++> SRC_URI += "\
++>             file://platform-top.h \
++>             file://u-boot-xlnx-Choose-EL.patch \
++>             file://u-boot-xlnx-Enable-Usb-Eth-Dongle.patch \
++>             "
++17a22,23
++> 
++> 
+diff -ruN -p2 petalinux/scripts/u-boot-xlnx-Choose-EL.patch petalinux/scripts.96/u-boot-xlnx-Choose-EL.patch
+--- petalinux/scripts/u-boot-xlnx-Choose-EL.patch	1969-12-31 19:00:00.000000000 -0500
++++ petalinux/scripts.96/u-boot-xlnx-Choose-EL.patch	2023-07-28 13:26:12.052849000 -0400
+@@ -0,0 +1,20 @@
++diff --git a/board/xilinx/zynqmp/zynqmp.c b/board/xilinx/zynqmp/zynqmp.c
++index 8610663711..b59cf68a1a 100644
++--- a/board/xilinx/zynqmp/zynqmp.c
+++++ b/board/xilinx/zynqmp/zynqmp.c
++@@ -410,8 +410,14 @@ unsigned long do_go_exec(ulong (*entry)(int, char * const []), int argc,
++ 	if (current_el() > 1) {
++ 		smp_kick_all_cpus();
++ 		dcache_disable();
++-		armv8_switch_to_el1(0x0, 0, 0, 0, (unsigned long)entry,
+++
+++        if(argc > 1 && !strcmp(argv[1], "debug"))
+++		    armv8_switch_to_el2(0x0, 0, 0, 0, (unsigned long)entry,
+++				    ES_TO_AARCH64);
+++        else
+++		    armv8_switch_to_el1(0x0, 0, 0, 0, (unsigned long)entry,
++ 				    ES_TO_AARCH64);
+++
++ 	} else {
++ 		printf("FAIL: current EL is not above EL1\n");
++ 		ret = EINVAL;
+diff -ruN -p2 petalinux/scripts/u-boot-xlnx-Enable-Usb-Eth-Dongle.patch petalinux/scripts.96/u-boot-xlnx-Enable-Usb-Eth-Dongle.patch
+--- petalinux/scripts/u-boot-xlnx-Enable-Usb-Eth-Dongle.patch	1969-12-31 19:00:00.000000000 -0500
++++ petalinux/scripts.96/u-boot-xlnx-Enable-Usb-Eth-Dongle.patch	2023-07-28 16:45:34.372791000 -0400
+@@ -0,0 +1,9 @@
++diff --git a/configs/xilinx_zynqmp_virt_defconfig b/configs/xilinx_zynqmp_virt_defconfig
++index da89e0e20f..c8051d3655 100644
++--- a/configs/xilinx_zynqmp_virt_defconfig
+++++ b/configs/xilinx_zynqmp_virt_defconfig
++@@ -131,3 +131,4 @@ CONFIG_PANIC_HANG=y
++ CONFIG_SPL_GZIP=y
++ CONFIG_OF_LIBFDT_OVERLAY=y
++ CONFIG_EFI_LOADER_BOUNCE_BUFFER=y
+++CONFIG_USB_ETHER_RTL8152=y
