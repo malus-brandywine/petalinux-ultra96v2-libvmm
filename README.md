@@ -9,7 +9,7 @@ Virtual Machine Monitor (VMM) built on the seL4 Core Platform (seL4CP).
 
 
 Script `Setup-petalinux-ultra96v2-sel4cpvmm.sh` downloads Avnet repositories
-and applies the patch to modify petalinux/scripts directory.
+and applies the patch to modify `petalinux/scripts` directory.
 
 
 Current version of the script uses Xilinx tools of version 2020.1,
