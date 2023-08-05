@@ -3,13 +3,13 @@
 ## Building Ultra96v2 Petalinux artefacts for use with sel4cp_VMM
 
 
-The project offers patches to configure scripts provided by Avnet
-the way the built artefacts can be used by `sel4cp_VMM` - 
+The project provides patches to configure Anvet build scripts
+so they produce proper artefacts to be used in <i>sel4cp_VMM</i> - 
 Virtual Machine Monitor (VMM) built on the seL4 Core Platform (seL4CP). 
 
 
-Script `Setup-petalinux-ultra96v2-sel4cpvmm.sh` downloads Avnet repositories
-and applies the patch to modify `petalinux/scripts` directory.
+Script <i>Setup-petalinux-ultra96v2-sel4cpvmm.sh</i> downloads Avnet repositories
+and applies a patch to modify <i>petalinux/scripts</i> directory.
 
 
 Current version of the script uses Xilinx tools of version 2020.1,
@@ -33,7 +33,7 @@ cd petalinux-ultra96v2-sel4cpvmm
 ```
 
 After the repositories has been set up you will find 3 new directories
-in petalinux-ultra96v2:
+in <i>petalinux-ultra96v2</i>:
 
 
 ```
@@ -52,7 +52,7 @@ scripts to setup the building environment:
 . [path_to_vitis]/Vitis/2020.1/settings64.sh
 ```
 
-3. In the shell, change directory to petalinux/scripts and run the script
+3. In the shell, change directory to <i>petalinux/scripts</i> and run the script
 to build BSP:
 
 
@@ -73,8 +73,8 @@ INFO: BSP is ready</br>
 </br>
 
 4. If the build was successful, you will find the artefacts intended for
-<i>sel4cp_vmm</i> - `image` and `rootfs.cpio.gz` - in directory
-`petalinux/projects/ultra96v2_oob_2020_1/images/linux`
+<i>sel4cp_vmm</i> --- <i>image</i> and <i>rootfs.cpio.gz</i> --- in directory
+<i>petalinux/projects/ultra96v2_oob_2020_1/images/linux</i>
 
 </br>
 
@@ -88,7 +88,7 @@ INFO: BSP is ready</br>
 The project uses the common <i>zynqmp</i> boot scenario: firmware loads
 ATF and U-Boot, U-Boot loads a custom application image.
 
-The setting is beneficial for development stage since U-Boot offers loading
+The setting is beneficial for development stage since U-Boot enables loading
 a custom image over Ethernet. I used an USB-to-Ethernet adapter tp-link UE300,
 so this one was added to the U-Boot configuration.
 
@@ -101,7 +101,7 @@ When running an image of <i>sel4cp</i>-based system with <i>sel4cp_vmm</i> compo
 U-Boot has to set a PE to EL2 before passing the execution flow to the image.
 To solve it, I added the second parameter to the command - string "debug":</br>
 
-$ go addr [debug]
+$ go <i>addr</i> <i>[debug]</i>
 
 </br>
 
@@ -110,7 +110,7 @@ If "debug" is present, then U-Boot sets EL2, otherwise it sets EL1.
 </br>
 
 
-Example of U-Boot script:
+Example of U-Boot command sequence:
 
 ```
 setenv ipaddr 192.168.9.25
@@ -128,13 +128,16 @@ tftpboot 0x40000000 loader.img
 go 0x40000000 debug
 ```
 
+To use modified U-Boot, update file BOOT.BIN on the boot SD card.
+
 </br>
 
 
-The third, a rootfs image built with original recipe `avnet-minimal-image`
-is pretty large (rootf.cpio: ~250M). I patched `avnet-image-minimal.inc`
-so it inherits directly `core-image` instead of inheriting the same recipe
-throught `petalinux-image-common.inc`.</br>
+The third, a rootfs image built with original recipe <i>avnet-minimal-image</i>
+is pretty large (rootf.cpio: ~250M).</br>
+I patched <i>avnet-image-minimal.inc</i> so it inherits directly <i>core-image</i>
+instead of inheriting the same recipe
+throught <i>petalinux-image-common.inc</i>.</br>
 Be adviced: this is considerably reduced rootfs image with many packages dropped.
 
 </br>
