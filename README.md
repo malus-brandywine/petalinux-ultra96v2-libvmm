@@ -8,7 +8,7 @@ so they produce proper artefacts to be used in <i>libvmm</i> -
 Virtual Machine Monitor (VMM) built on the seL4 Microkit. 
 
 
-Script <i>Setup-petalinux-ultra96v2-sel4cpvmm.sh</i> downloads Avnet repositories
+Script <i>Setup-petalinux-ultra96v2-libvmm.sh</i> downloads Avnet repositories
 and applies a patch to modify <i>petalinux/scripts</i> directory.
 
 
@@ -29,7 +29,7 @@ run the following commands to get and patch the Avnet build scripts:
 mkdir petalinux-ultra96v2; cd petalinux-ultra96v2
 git clone git@github.com:malus-brandywine/petalinux-ultra96v2-libvmm.git
 cd petalinux-ultra96v2-libvmm
-./Setup-petalinux-ultra96v2-sel4cpvmm.sh
+./Setup-petalinux-ultra96v2-libvmm.sh
 ```
 
 After the repositories has been set up you will find 3 new directories

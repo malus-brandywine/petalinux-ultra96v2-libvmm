@@ -15,7 +15,7 @@ cd ../petalinux
 git checkout 2020.1
 
 cd ..
-patch -d petalinux/scripts/ < Configure-Petalinux-BSP-For-Sel4cpvmm-System.patch
+patch -d petalinux/scripts/ < Configure-Petalinux-BSP-For-Libvmm-System.patch
 
 chmod ug+x petalinux/scripts/make_ultra96v2.vmm.sh
 
