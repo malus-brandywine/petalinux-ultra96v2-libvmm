@@ -1,11 +1,11 @@
 
 
-## Building Ultra96v2 Petalinux artefacts for use with sel4cp_VMM
+## Building Ultra96v2 Petalinux artefacts for use with libvmm
 
 
 The project provides patches to configure Anvet build scripts
-so they produce proper artefacts to be used in <i>sel4cp_VMM</i> - 
-Virtual Machine Monitor (VMM) built on the seL4 Core Platform (seL4CP). 
+so they produce proper artefacts to be used in <i>libvmm</i> - 
+Virtual Machine Monitor (VMM) built on the seL4 Microkit. 
 
 
 Script <i>Setup-petalinux-ultra96v2-sel4cpvmm.sh</i> downloads Avnet repositories
@@ -27,8 +27,8 @@ run the following commands to get and patch the Avnet build scripts:
 
 ```
 mkdir petalinux-ultra96v2; cd petalinux-ultra96v2
-git clone git@github.com:malus-brandywine/petalinux-ultra96v2-sel4cpvmm.git
-cd petalinux-ultra96v2-sel4cpvmm
+git clone git@github.com:malus-brandywine/petalinux-ultra96v2-libvmm.git
+cd petalinux-ultra96v2-libvmm
 ./Setup-petalinux-ultra96v2-sel4cpvmm.sh
 ```
 
@@ -73,7 +73,7 @@ INFO: BSP is ready</br>
 </br>
 
 4. If the build was successful, you will find the artefacts intended for
-<i>sel4cp_vmm</i> --- <i>image</i> and <i>rootfs.cpio.gz</i> --- in directory
+<i>libvmm</i> --- <i>image</i> and <i>rootfs.cpio.gz</i> --- in directory
 <i>petalinux/projects/ultra96v2_oob_2020_1/images/linux</i>
 
 </br>
@@ -94,10 +94,10 @@ so this one was added to the U-Boot configuration.
 
 </br>
 
-Next, <i>sel4cp</i>-based system image is loaded by U-Boot with command "go". Xilinx
+Next, <i>Microkit</i>-based system image is loaded by U-Boot with command "go". Xilinx
 implemented its own version of the command which sets a PE to exception level EL1.
 
-When running an image of <i>sel4cp</i>-based system with <i>sel4cp_vmm</i> component,
+When running an image of <i>Microkit</i>-based system with <i>libvmm</i> component,
 U-Boot has to set a PE to EL2 before passing the execution flow to the image.
 To solve it, I added the second parameter to the command - string "debug":</br>
 
